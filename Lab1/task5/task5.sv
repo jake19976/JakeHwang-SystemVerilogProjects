@@ -13,10 +13,14 @@ logic load_pcard1, load_pcard2, load_pcard3;
 logic load_dcard1, load_dcard2, load_dcard3;
 logic [3:0] pscore, dscore;
 logic [3:0] pcard3;
+logic [11:0] fifo_wdata;
+logic [11:0] fifo_rdata;
+logic fifo_full, fifo_empty;
 
 assign resetb = KEY[3];
 assign slow_clock = KEY[0];
 assign fast_clock = CLOCK_50;
+assign fifo_wdata = {pscore, dscore, pcard3};
 
 // instantiate the datapath
 
@@ -64,5 +68,27 @@ debouncer db(.clock(fast_clock),
             .slow_clock(slow_clock),
             .resetb(resetb),
             .clock_tick(clock_tick));
+
+// Instantiate the custom Async FIFO
+baccarat_async_fifo #(
+    .DATA_WIDTH(12),
+    .ADDR_WIDTH(3)
+) game_buffer (
+    .wclk(slow_clock),           // Write Domain: Driven manually by KEY[0]
+    .wrst_n(resetb),
+    .w_en(1'b1),                 // Keep pushing updates on every button tick safely
+    .wdata(fifo_wdata),
+    
+    .rclk(fast_clock),           // Read Domain: System 50MHz Clock
+    .rrst_n(resetb),
+    .r_en(!fifo_empty),          // Automatically pull data out when available
+    .rdata(fifo_rdata),
+    
+    .wfull(fifo_full),
+    .rempty(fifo_empty)
+);
+
+logic [3:0] fast_pscore, fast_dscore, fast_pcard3;
+assign {fast_pscore, fast_dscore, fast_pcard3} = fifo_rdata;
 
 endmodule
