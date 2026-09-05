@@ -74,14 +74,14 @@ baccarat_async_fifo #(
     .DATA_WIDTH(12),
     .ADDR_WIDTH(3)
 ) game_buffer (
-    .wclk(slow_clock),           // Write Domain: Driven manually by KEY[0]
+    .wclk(slow_clock),         
     .wrst_n(resetb),
-    .w_en(1'b1),                 // Keep pushing updates on every button tick safely
+    .w_en(1'b1),                 
     .wdata(fifo_wdata),
     
-    .rclk(fast_clock),           // Read Domain: System 50MHz Clock
+    .rclk(fast_clock),           
     .rrst_n(resetb),
-    .r_en(!fifo_empty),          // Automatically pull data out when available
+    .r_en(!fifo_empty),         
     .rdata(fifo_rdata),
     
     .wfull(fifo_full),
